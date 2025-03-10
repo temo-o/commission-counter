@@ -4,7 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-
+    exchange_service_endpoint: '%env(EXCHANGE_SERVICE_ENDPOINT)%'
+    exchange_service_access_key: '%env(EXCHANGE_SERVICE_ACCESS_KEY)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -19,6 +20,17 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\ApiService:
+        arguments:
+            $httpClient: '@Symfony\Contracts\HttpClient\HttpClientInterface'
+
+    App\Service\ExchangeRateService:
+        arguments:
+            $apiService: '@App\Service\ApiService'
+            $endpoint: '%exchange_service_endpoint%'
+            $accessKey: '%exchange_service_access_key%'
+
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
