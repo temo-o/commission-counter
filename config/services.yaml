@@ -31,6 +31,41 @@ services:
             $endpoint: '%exchange_service_endpoint%'
             $accessKey: '%exchange_service_access_key%'
 
+#    App\Service\CommissionCalculator:
+#        arguments:
+#            $exchangeRateService: '@App\Service\ExchangeRateService'
+#            $freeWithdrawalsLimit: '%env(int:WEEKLY_FREE_WITHDRAWALS_LIMIT)%'
+#            $freeAmountLimit: '%env(float:WEEKLY_FREE_AMOUNT_LIMIT)%'
+#            $depositFeePercentage: '%env(float:DEPOSIT_FEE_PERCENTAGE)%'
+#            $privateWithdrawalFeePercentage: '%env(float:PRIVATE_WITHDRAWAL_FEE_PERCENTAGE)%'
+#            $businessWithdrawalFeePercentage: '%env(float:BUSINESS_WITHDRAWAL_FEE_PERCENTAGE)%'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    App\Service\Strategy\DepositCommissionStrategy:
+        arguments:
+            $feePercentage: '%env(float:DEPOSIT_FEE_PERCENTAGE)%'
+        tags:
+            - { name: 'app.commission_strategy' }
+
+    App\Service\Strategy\PrivateWithdrawCommissionStrategy:
+        arguments:
+            $exchangeRateService: '@App\Service\ExchangeRateService'
+            $freeWithdrawalsLimit: '%env(int:WEEKLY_FREE_WITHDRAWALS_LIMIT)%'
+            $freeAmountLimit: '%env(float:WEEKLY_FREE_AMOUNT_LIMIT)%'
+            $feePercentage: '%env(float:PRIVATE_WITHDRAWAL_FEE_PERCENTAGE)%'
+        tags:
+            - { name: 'app.commission_strategy' }
+
+    App\Service\Strategy\BusinessWithdrawCommissionStrategy:
+        arguments:
+            $feePercentage: '%env(float:BUSINESS_WITHDRAWAL_FEE_PERCENTAGE)%'
+        tags:
+            - { name: 'app.commission_strategy' }
+
+    # Register the factory
+    App\Service\Strategy\CommissionStrategyFactory:
+        arguments:
+            $strategies: !tagged_iterator app.commission_strategy
+
+    App\Service\CommissionCalculator:
+        arguments:
+            $strategyFactory: '@App\Service\Strategy\CommissionStrategyFactory'

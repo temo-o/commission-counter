@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\CommissionCalculator;
 use App\Service\CsvParser;
 use Symfony\Component\Console\{Attribute\AsCommand,
     Command\Command,
@@ -17,9 +18,12 @@ use Exception;
 class CalculateCommissionCommand extends Command
 {
     private CsvParser $csvParser;
-    public function __construct(CsvParser $csvParser)
+    private CommissionCalculator $commissionCalculator;
+
+    public function __construct(CsvParser $csvParser, CommissionCalculator $commissionCalculator)
     {
         $this->csvParser = $csvParser;
+        $this->commissionCalculator = $commissionCalculator;
         parent::__construct();
 
     }
@@ -40,8 +44,9 @@ class CalculateCommissionCommand extends Command
 
         $parser = $this->csvParser->getIterator();
 
-        foreach ($parser as $row) {
-            $output->writeln(print_r($row, true));
+        foreach ($parser as $operation) {
+            $fee = $this->commissionCalculator->calculate($operation);
+            $output->writeln(number_format($fee, 2));
         }
 
         return Command::SUCCESS;
